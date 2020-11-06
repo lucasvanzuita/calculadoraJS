@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt_BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        background-color: rgb(5, 3, 3);
+      }
+      main {
+        display: table;
+        margin: 5% auto;
+
+        width: 16vw;
+        height: 70vh;
+        padding: 30px;
+        border: 7px solid rgba(255, 255, 255, 0.3);
+        border-radius: 40px;
+        box-shadow: 12px 11px 10px rgba(255, 255, 255, 0.3);
+      }
+      main,
+      .display,
+      .botao {
+        background-color: rgb(5, 3, 3);
+      }
+
+      .display input {
+        margin-bottom: 20px;
+        padding: 1px 20px;
+
+        width: 230px;
+        height: 50px;
+        background-color: rgb(5, 3, 3);
+
+        border-radius: 40px;
+        border: 3px solid rgb(5, 3, 3);
+
+        font-family: sans-serif;
+        text-align: right;
+        font-size: 35pt;
+      }
+      .botao {
+        width: 4.2rem;
+        height: 4.2rem;
+        border-radius: 50%;
+        text-align: left;
+        padding-left: 26px;
+        cursor: pointer;
+        background: rgba(99, 38, 38, 0.8);
+        font-family: sans-serif;
+        font-size: 27px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="calculadora">
+        <table id="tabela">
+          <tr>
+            <td colspan="4" class="display">
+              <input
+                type="text"
+                id="saida"
+                autofocus
+                value="0"
+                disabled
+                maxlength="14"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="botao Clear"       id="btnClear">C</td>
+            <td class="botao BackSpace"   id="btnBackspace">B</td>
+            <td class="botao TrocarSinal" id="btnMudarSinal">+/-</td>
+            <td class="botao Sinal"       id="btnModulo">%</td>
+          </tr>
+          <tr>
+            <td class="botao Num"   id="btn7">7</td>
+            <td class="botao Num"   id="btn8">8</td>
+            <td class="botao Num"   id="btn9">9</td>
+            <td class="botao Sinal" id="btnDiv">÷</td>
+          </tr>
+          <tr>
+            <td class="botao Num"   id="btn4">4</td>
+            <td class="botao Num"   id="btn5">5</td>
+            <td class="botao Num"   id="btn6">6</td>
+            <td class="botao Sinal" id="btnMulti">×</td>
+          </tr>
+          <tr>
+            <td class="botao Num"   id="btn1">1</td>
+            <td class="botao Num"   id="btn2">2</td>
+            <td class="botao Num"   id="btn3">3</td>
+            <td class="botao Sinal" id="btnSub">-</td>
+          </tr>
+          <tr>
+            <td class="botao Num"   id="btnPonto">.</td>
+            <td class="botao Num"   id="btn0">0</td>
+            <td class="botao Igual" id="btnIgual">=</td>
+            <td class="botao Sinal" id="btnSoma">+</td>
+          </tr>
+        </table>
+      </div>
+    </main>
+    <script>
+
+      //Todas ás váriaveis globais  
+      var calculadora = document.querySelector("#calculadora");
+      var numUm;
+      var numDois;
+      var saidaNull = true;
+      var addNum = true;
+      var primeiroSinal = true;
+      var sinalExistente = true;
+      var primeiroCaracter = true;
+      var sinalClicado = false;
+      var funcao = "";
+      var resultadoNaTela = false;
+      var quantidadeSinais = 0;
+      var numClick = false;
+      var modulo = false;
+      var quantidadeNum = 0;
+      
+      //Funcão que remove o número da função após o click do usuário
+      function removerNumClick() {
+        let botaoSinal = document.querySelectorAll(".Sinal");
+        for (botao of botaoSinal) {
+          botao.classList.remove("clickBotao");
+        }
+      }
+
+      //Evento de click que vai chamar todas as funçôes/botões que o usuário clicar 
+      document.addEventListener("click", function (e) {
+        const el = e.target;
+
+        if (el.classList.contains("Num")) {
+          let numero = el.innerText;
+          if (numero == ".") {
+            if (saida.value.indexOf(".") == -1) {
+              numSaida(numero);
+            }
+          } else {
+            numSaida(numero);
+          }
+        } else if (el.classList.contains("Sinal")) {
+          removerNumClick();
+          let sinal = el.innerText;
+          if (primeiroCaracter && sinal == "-") {
+            saida.value = "-";
+            primeiroCaracter = false;
+            saidaNull = false;
+            return;
+          } else if (sinal == "×") {
+            sinal = "*";
+          } else if (sinal == "÷") {
+            sinal = "/";
+          } else if (sinal == "%"){
+            sinal = "/100"  
+          }
+          caracterSinal(sinal);
+        } else if (
+          el.classList.contains("Igual") &&
+          !addNum &&
+          quantidadeSinais != 0
+        ) {
+          igual();
+        } else if (el.classList.contains("Clear")) {
+          limparNumSaida();
+        } else if (el.classList.contains("TrocarSinal")) {
+          trocarSinal();
+        } else if (el.classList.contains("BackSpace")) {
+          saida.value = saida.value.slice(0, -1);
+        } else if (saida.value == "") {
+          saida.value = 0;
+          saidaNull = true;
+        }
+      });
+
+      //Faz que os números se torne negativo 
+      function trocarSinal() {
+        let valor;
+        if (addNum) {
+          valor = Number(saida.value);
+        } else if (saidaNull) {
+          valor = Number(funcao);
+          saida.value = `${valor * -1}`;
+          funcao = saida.value;
+          return;
+        } else {
+          valor = Number(saida.value);
+        }
+
+        saida.value = `${valor * -1}`;
+      }
+
+      //Botão clear limpa retunar a tela toda limpar sem mémoria de clicks anterior
+      function limparNumSaida() { 
+        saida.value = 0;
+        saidaNull = true;
+        addNum = true;
+        primeiroSinal = true;
+        funcao = "";
+        quantidadeSinais = 0;
+        primeiroCaracter = true;
+        sinalExistente = true;
+        sinalClicado = false;
+        numClick = false;
+        modulo = false;
+        quantidadeNum = 0;
+        resultadoNaTela = false;
+      }
+
+        //Possibilita que a tela retorne NuLL e usuário consegue fornercer novos valores 
+        function numSaida(num) {
+        sinalClicado = false;
+        primeiroCaracter = false;
+        numClick = true;
+        if (resultadoNaTela) {
+          limparNumSaida();
+        }
+
+        if (saida.value.length < 14) {
+          if (saidaNull) {
+            saida.value = "";
+            saidaNull = false;
+          }
+
+          removerNumClick();
+          saida.value += num;
+        }
+      }
+
+      //Função que analisar os caracter que o usuário clicar e fazer o cálculo dos números
+      function caracterSinal(key) {
+        quantidadeSinais++;
+
+        if (quantidadeSinais > 1 && sinalExistente && numClick) {
+          if (sinalClicado) {
+            return;
+          }
+          adicionaNoElemento();
+          funcao += numDois;
+          funcao = eval(funcao);
+          saida.value = funcao;
+          funcao += key;
+          if (modulo) {
+            funcao = eval(funcao);
+            saida.value = funcao;
+            modulo = false;
+          }
+          quantidadeNum = 1;
+          addNum = false;
+          saidaNull = true;
+          sinalClicado = true;
+          numClick = false;
+          return;
+        }
+
+        if (!primeiroSinal && !numClick) {
+          funcao = funcao.slice(0, -1);
+          quantidadeSinais--;
+        }
+
+        if (primeiroSinal) {
+          sinalExistente = true;
+          primeiroCaracter = false;
+          adicionaNoElemento();
+          funcao = `${numUm + key}`;
+          addNum = false;
+          primeiroSinal = false;
+          saidaNull = true;
+          numClick = false;
+          resultadoNaTela = false;
+        } else {
+          funcao += key;
+          sinalExistente = true;
+          saidaNull = true;
+          addNum = false;
+          numClick = false;
+          resultadoNaTela = false;
+        }
+      }
+      
+
+      //Função que pode se considerar o eval do sistema ele esconte os sinais que o úsario selecionar
+      function adicionaNoElemento() {
+        if (addNum) {
+          numUm = `(${saida.value})`;
+          quantidadeNum++;
+        } else {
+          numDois = `(${saida.value})`;
+          quantidadeNum++;
+        }
+      }
+
+      //Após o clique ele mostra o resultado de toda operação
+      function igual() {
+        sinalExistente = false;
+        quantidadeSinais = 0;
+        adicionaNoElemento();
+        funcao += numDois;
+        funcao = eval(funcao);
+        funcao = `${funcao}`;
+        saida.value = funcao;
+        numUm = `(${funcao})`;
+        saidaNull = true;
+        quantidadeNum = 1;
+        resultadoNaTela = true;
+      }
+    </script>
+  </body>
+</html>
